@@ -1,6 +1,6 @@
 import numpy as np
 
-class SHAPE:
+class SHAPE():
 
     def __init__(self,shape):
         self.data = shape
@@ -11,12 +11,18 @@ class SHAPE:
     def rotate(self,No_of_rot):
         return np.rot90(shape,k=No_of_rot,axes=(0,1))
 
-class BOARD:
+    def printShape(self):
+        for i in range(len(self.data)):
+            for j in range(len(self.data[0])):
+                print(self.data[i][j]),
+            print
+
+class BOARD():
 
     def __init__(self,row,col):
         self.row = row
         self.col = col
-        self.board = np.array[[0 for i in range(self.col)] for j in range(self.row)]
+        self.board = np.array([[0 for i in range(col)] for j in range(row)])
 
     def check(self,shape,posX,posY):
         if posX >= self.col or posX < 0 or posY >= self.row or posY < 0 :
@@ -34,7 +40,25 @@ class BOARD:
         return self.board
 
     def printScreen(self):
-        for i in range(board):
-            for j in range(board[0]):
-                print(board[i,j]),
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                print(board[i][j]),
             print
+
+def getScore(current, target):
+    return np.sum(np.absolute(np.subtract(current,target)))
+
+def initializeShapes():
+    shape1 = [[1,1],[1,1]]
+    shape2 = [[1,0],[1,0]]
+    shape3 = [[1,0],[1,1]]
+    ShapeData = []
+    ShapeData.append(SHAPE(shape1))
+    ShapeData.append(SHAPE(shape2))
+    ShapeData.append(SHAPE(shape3))
+    return ShapeData
+
+if __name__ == "__main__":
+    Shapes = initializeShapes()
+    for shape in Shapes:
+        shape.printShape()
