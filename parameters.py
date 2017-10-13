@@ -8,4 +8,7 @@ Total_shapes = 10
 
 SHAPE_DATA = np.array([s1,s2,s3])
 BOARD_DATA = np.array([a,b,c])
-# STEP_DATA = 
+# STEP_DATA =
+
+# a,b,c are the sample board shapes for training purpose
+# s1,s2...,sn are the all shpaes to be used in for solving the problem

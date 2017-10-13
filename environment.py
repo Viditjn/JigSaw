@@ -2,7 +2,7 @@ import numpy as np
 import random
 import * from parameters
 
-class envrinoment():
+class ENVIRONMENT():
 
     def __init__(self):
         board_index = random.randint(0,len(BOARD_DATA))
@@ -43,33 +43,45 @@ class envrinoment():
         return score
 
     def step(self,step_index):
-        if step_index<=Total_shapes and step_index>0:
+        # for index 0:total_shapes for chosing a shape at pos curr_x,curr_y
+        is_done = False
+        if step_index<Total_shapes and step_index>=0:
             flag = self.CURR_BOARD.updateBoard(self.SHAPE_MAT[step_index-1],self.curr_x,self.curr_y)
             temp_score = getScore()
             if flag:
-                return temp_score
+                return temp_score,is_done
             else :
-                return temp_score + reward_wrongMove # In case when the chosen shape can't fit in the desired postion
+                return temp_score + reward_wrongMove,is_done # In case when the chosen shape can't fit in the desired postion
+        # for moving the curr_positon
         else:
             temp_score = getScore()
-            if step_index == Total_shapes + 1: #for right
+            if step_index == Total_shapes: #for right
                 self.curr_x += 1
-            elif step_index == Total_shapes + 2: #for left
+            elif step_index == Total_shapes + 1: #for left
                 self.curr_x -= 1
-            elif step_index == Total_shapes + 1: #for up
+            elif step_index == Total_shapes + 2: #for up
                 self.curr_y += 1
-            elif step_index == Total_shapes + 1: #for down
+            elif step_index == Total_shapes + 3: #for down
                 self.curr_y -= 1
+            elif step_index == Total_shapes + 4: #Do nothing
+                pass
+            elif step_index == Total_shapes + 5: #EXIT
+                is_done = True
+            ##
+
             if self.curr_x < 0 or self.curr_x >= len(self.CURR_BOARD.col) or self.curr_y < 0 or self.curr_y >= len(self.CURR_BOARD.row):
-                return temp_score + reward_wrongMove
+                return temp_score + reward_wrongMove,is_done
             else:
-                return temp_score
+                return temp_score,is_done
 
     def target():
         return self.TARGET_BOARD
 
     def state():
         return self.CURR_BOARD, curr_x, curr_y
+
+    def shpaes():
+        return self.SHAPE_MAT
 
 
 class SHAPE():
@@ -129,19 +141,6 @@ class BOARD():
     def __del__(self):
       pass
 
-def getScore(current, target):
-    score = 0
-    for i in range(len(current)):
-        for j in range(len(current[0])):
-            if target[i][j]==0:
-                score += current[i][j]*reward_outOfBound[min(3,current[i][j])]
-            elif target[i][j]==1 and current[i][j]==1:
-                score += reward_correct
-            elif target[i][j]==1:
-                # No +ve or -ve reward for the place where no block is inserted as makes no sense to add for those who are not even considered
-                score += max(0,current[i][j]-target[i][j])*reward_overwrite[min(3,abs(current[i][j]-target[i][j]))]
-
-    return score
 
 def initializeShapes():
     shape1 = [[1,1],[1,1]]
@@ -152,6 +151,11 @@ def initializeShapes():
     ShapeData.append(SHAPE(shape2))
     ShapeData.append(SHAPE(shape3))
     return ShapeData
+
+def play():
+    env = ENVIRONMENT()
+    while True:
+
 
 if __name__ == "__main__":
     Shapes = initializeShapes()
