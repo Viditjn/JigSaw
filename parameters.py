@@ -6,6 +6,12 @@ reward_wrongMove = -1000
 reward_correct = 2
 Total_shapes = 3
 
+positive_score = 5
+misfit_score = -10
+overfit_score = -100
+move_reward = 0
+wrong_move = -100
+
 
 s1 = np.array([[1,1],[1,1]])
 s2 = np.array([[1,0],[1,0]])

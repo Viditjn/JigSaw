@@ -37,6 +37,33 @@ class ENVIRONMENT():
                 print self.CURR_BOARD.board[i][j],
             print
 
+    def step_reward(self,step_index):
+        tempX = self.curr_x
+        tempY = self.curr_y
+        reward = 0
+        flag = 0
+        if step_index<=Total_shapes and step_index>=0:
+            tempX -= self.SHAPE_MAT[step_index-1].startX
+            for i in range(self.SHAPE_MAT[step_index-1].height):
+                if flag == 0:
+                    for j in range(self.SHAPE_MAT[step_index-1].width):
+                        if flag == 0 and self.SHAPE_MAT[step_index-1].data[i][j] == 1:
+                            if self.CURR_BOARD.board[tempX+i][tempY+j] == 1 and self.TARGET_BOARD.board[tempX+i][tempY+j] == 1: #Positive score
+                                reward += positive_score
+                            if self.CURR_BOARD.board[tempX+i][tempY+j] == 1 and self.TARGET_BOARD.board[tempX+i][tempY+j] == 0: #negative misfit score
+                                reward += misfit_score
+                            if self.CURR_BOARD.board[tempX+i][tempY+j] > 1 : #overfit high negative reward and break
+                                reward = overfit_score
+                                flag = 1
+        else:
+            # pdb.set_trace()
+            if self.curr_x < 0 or self.curr_x >= self.CURR_BOARD.col \
+                or self.curr_y < 0 or self.curr_y >= self.CURR_BOARD.row: # for moving out of the bound
+                    reward = wrong_move
+            else :
+                reward = 0 #correct move
+        return reward
+
     def getScore(self):
         score = 0
         # pdb.set_trace()
@@ -54,39 +81,45 @@ class ENVIRONMENT():
         return score
 
     def step(self,step_index):
+        if step_index > Total_shapes + 5:
+            return -1,-1,-1
         # for index 0:total_shapes for chosing a shape at pos curr_x,curr_y
         # pdb.set_trace()
         is_done = False
-        if step_index<Total_shapes and step_index>=0:
+        if step_index<=Total_shapes and step_index>=0:
             flag,self.CURR_BOARD.board = self.CURR_BOARD.updateBoard(self.SHAPE_MAT[step_index-1],self.curr_x,self.curr_y)
             # pdb.set_trace()
+            step_score = self.step_reward(step_index)
             temp_score = self.getScore()
             # self.CURR_BOARD = self.CURR_BOARD.getScreen()
             if flag:
-                return temp_score,is_done
+                return temp_score,is_done,step_score
             else :
-                return temp_score + reward_wrongMove,is_done # In case when the chosen shape can't fit in the desired postion
+                return temp_score + reward_wrongMove,is_done,step_score # In case when the chosen shape can't fit in the desired postion
         # for moving the curr_positon
         else:
             temp_score = self.getScore()
-            if step_index == Total_shapes: #for left
-                self.curr_x -= 1
-            elif step_index == Total_shapes + 1: #for left
-                self.curr_x += 1
-            elif step_index == Total_shapes + 2: #for up
-                self.curr_y += 1
-            elif step_index == Total_shapes + 3: #for down
+            if step_index == Total_shapes + 1: #for left
                 self.curr_y -= 1
-            elif step_index == Total_shapes + 4: #Do nothing
+            elif step_index == Total_shapes + 2: #for left
+                self.curr_y += 1
+            elif step_index == Total_shapes + 3: #for up
+                self.curr_x -= 1
+            elif step_index == Total_shapes + 4: #for down
+                self.curr_x += 1
+            elif step_index == Total_shapes + 5: #Do nothing
                 pass
-            elif step_index == Total_shapes + 5: #EXIT
+            elif step_index == Total_shapes + 6: #EXIT
                 is_done = True
             ##
 
-            if self.curr_x < 0 or self.curr_x >= self.CURR_BOARD.col or self.curr_y < 0 or self.curr_y >= self.CURR_BOARD.row:
-                return temp_score + reward_wrongMove,is_done
+            step_score = self.step_reward(step_index)
+            # print step_score
+            if self.curr_x < 0 or self.curr_x >= self.CURR_BOARD.col \
+                or self.curr_y < 0 or self.curr_y >= self.CURR_BOARD.row: # for moving out of the bound
+                return temp_score + reward_wrongMove,is_done,step_score
             else:
-                return temp_score,is_done
+                return temp_score,is_done,step_score
 
     def target():
         return self.TARGET_BOARD
@@ -146,6 +179,7 @@ class BOARD():
             posX = posX - shape.startX
             # pdb.set_trace()
             self.board[posX:posX+shape.width,posY:posY+shape.height] += shape.data
+            self.board[self.board > 1] = 2 # Because the overfit has same score if it has one overfit or more
             posX = posX + shape.startX
             return True,self.board
         else :
@@ -186,9 +220,9 @@ def play():
     flagPlay = True
     while flagPlay:
         move_index = raw_input(" Select a shape and position to play : ")
-        temp_score,is_done = env.step(int(move_index))
+        temp_score,is_done,step_score = env.step(int(move_index))
         print env.get_pos()
-        print temp_score,is_done
+        print temp_score,is_done,step_score
         env.print_board()
 
 def startMessage(Shapes):
