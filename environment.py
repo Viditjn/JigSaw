@@ -1,11 +1,12 @@
-import numpy as np
 import random
-import * from parameters
+import pdb
+import numpy as np
+from parameters import *
 
 class ENVIRONMENT():
 
     def __init__(self):
-        board_index = random.randint(0,len(BOARD_DATA))
+        board_index = random.randint(0,len(BOARD_DATA)-1)
         col = len(BOARD_DATA[board_index][0])
         row = len(BOARD_DATA[board_index])
         self.SHAPE_MAT = [SHAPE(SHAPE_DATA[i]) for i in range(Total_shapes)]
@@ -18,8 +19,8 @@ class ENVIRONMENT():
     def reset(self):
         del self.TARGET_BOARD
         del self.CURR_BOARD
-        board_index = random.randint(0,len(BOARD_DATA))
         col = len(BOARD_DATA[board_index][0])
+        board_index = random.randint(0,len(BOARD_DATA)-1)
         row = len(BOARD_DATA[board_index])
         self.TARGET_BOARD = BOARD(row,col)
         self.TARGET_BOARD.board = BOARD_DATA[board_index]
@@ -27,38 +28,51 @@ class ENVIRONMENT():
         self.curr_x = 0
         self.curr_y = 0
 
+    def print_board(self):
+        for i in range(self.TARGET_BOARD.row):
+            for j in range(self.TARGET_BOARD.col):
+                print self.TARGET_BOARD.board[i][j],
+            print '\t',
+            for j in range(self.CURR_BOARD.col):
+                print self.CURR_BOARD.board[i][j],
+            print
 
     def getScore(self):
         score = 0
-        for i in range(len(self.CURR_BOARD)):
-            for j in range(len(self.CURR_BOARD[0])):
-                if self.TARGET_BOARD[i][j]==0:
-                    score += self.CURR_BOARD[i][j]*reward_outOfBound[min(3,self.CURR_BOARD[i][j])]
-                elif self.TARGET_BOARD[i][j]==1 and self.CURR_BOARD[i][j]==1:
+        # pdb.set_trace()
+        for i in range(self.CURR_BOARD.row):
+            for j in range(self.CURR_BOARD.col):
+                if self.TARGET_BOARD.board[i][j]==0:
+                    score += self.CURR_BOARD.board[i][j]*reward_outOfBound[min(3,self.CURR_BOARD.board[i][j])]
+                elif self.TARGET_BOARD.board[i][j]==1 and self.CURR_BOARD.board[i][j]==1:
                     score += reward_correct
-                elif self.TARGET_BOARD[i][j]==1:
+                elif self.TARGET_BOARD.board[i][j]==1:
+                    # pdb.set_trace()
                     # No +ve or -ve reward for the place where no block is inserted as makes no sense to add for those who are not even considered
-                    score += max(0,self.CURR_BOARD[i][j]-self.TARGET_BOARD[i][j])*reward_overwrite[min(3,abs(self.CURR_BOARD[i][j]-self.TARGET_BOARD[i][j]))]
+                    score += max(0,self.CURR_BOARD.board[i][j]-self.TARGET_BOARD.board[i][j])*reward_overwrite[min(3,abs(self.CURR_BOARD.board[i][j]-self.TARGET_BOARD.board[i][j]))]
 
         return score
 
     def step(self,step_index):
         # for index 0:total_shapes for chosing a shape at pos curr_x,curr_y
+        # pdb.set_trace()
         is_done = False
         if step_index<Total_shapes and step_index>=0:
-            flag = self.CURR_BOARD.updateBoard(self.SHAPE_MAT[step_index-1],self.curr_x,self.curr_y)
-            temp_score = getScore()
+            flag,self.CURR_BOARD.board = self.CURR_BOARD.updateBoard(self.SHAPE_MAT[step_index-1],self.curr_x,self.curr_y)
+            # pdb.set_trace()
+            temp_score = self.getScore()
+            # self.CURR_BOARD = self.CURR_BOARD.getScreen()
             if flag:
                 return temp_score,is_done
             else :
                 return temp_score + reward_wrongMove,is_done # In case when the chosen shape can't fit in the desired postion
         # for moving the curr_positon
         else:
-            temp_score = getScore()
-            if step_index == Total_shapes: #for right
-                self.curr_x += 1
-            elif step_index == Total_shapes + 1: #for left
+            temp_score = self.getScore()
+            if step_index == Total_shapes: #for left
                 self.curr_x -= 1
+            elif step_index == Total_shapes + 1: #for left
+                self.curr_x += 1
             elif step_index == Total_shapes + 2: #for up
                 self.curr_y += 1
             elif step_index == Total_shapes + 3: #for down
@@ -69,7 +83,7 @@ class ENVIRONMENT():
                 is_done = True
             ##
 
-            if self.curr_x < 0 or self.curr_x >= len(self.CURR_BOARD.col) or self.curr_y < 0 or self.curr_y >= len(self.CURR_BOARD.row):
+            if self.curr_x < 0 or self.curr_x >= self.CURR_BOARD.col or self.curr_y < 0 or self.curr_y >= self.CURR_BOARD.row:
                 return temp_score + reward_wrongMove,is_done
             else:
                 return temp_score,is_done
@@ -82,6 +96,9 @@ class ENVIRONMENT():
 
     def shpaes():
         return self.SHAPE_MAT
+
+    def get_pos(self):
+        return self.curr_x,self.curr_y
 
 
 class SHAPE():
@@ -108,6 +125,9 @@ class BOARD():
         self.col = col
         self.board = np.array([[0 for i in range(col)] for j in range(row)])
 
+    # def get_pos(self):
+    #     return self.row,self.col
+
     def reset(self):
         board_index = random.randint(0,len(BOARD_DATA))
         self.board = BOARD_DATA[board_index]
@@ -117,17 +137,19 @@ class BOARD():
     def check(self,shape,posX,posY):
         if posX >= self.col or posX < 0 or posY >= self.row or posY < 0 :
             return False
-        if posX < shape.startX or (posX + shape.width - shape.startX > self.col) or (posY + shape.height > self.row):
+        if (posX + shape.width - shape.startX > self.col) or (posY + shape.height > self.row):
             return False
         return True
 
     def updateBoard(self,shape,posX,posY):
-        if check(shape,posX,posY):
+        if self.check(shape,posX,posY):
             posX = posX - shape.startX
-            self.board[posX:posX+shape.col,posY:posY+shape.row] += shape
-            return True
+            # pdb.set_trace()
+            self.board[posX:posX+shape.width,posY:posY+shape.height] += shape.data
+            posX = posX + shape.startX
+            return True,self.board
         else :
-            return False
+            return False,self.board
 
     def getScreen(self):
         return self.board
@@ -154,10 +176,32 @@ def initializeShapes():
 
 def play():
     env = ENVIRONMENT()
-    while True:
+    startMessage(env.SHAPE_MAT)
+    print "Instructions : "
+    i = 0
+    for instruction in instructions:
+        print '\t' +str(i) + " : ",
+        print instruction
+        i+=1
+    flagPlay = True
+    while flagPlay:
+        move_index = raw_input(" Select a shape and position to play : ")
+        temp_score,is_done = env.step(int(move_index))
+        print env.get_pos()
+        print temp_score,is_done
+        env.print_board()
 
+def startMessage(Shapes):
+    i = 1
+    for shape in Shapes:
+        print "Move Index " + str(i) + " : "
+        shape.printShape()
+        i+=1
+    for direction in directions:
+        print "Move Index " + str(i) + " : ",
+        print direction
+        i+=1
 
 if __name__ == "__main__":
-    Shapes = initializeShapes()
-    for shape in Shapes:
-        shape.printShape()
+    play()
+    # Shapes = initializeShapes()
